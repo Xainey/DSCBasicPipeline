@@ -4,7 +4,10 @@ param(
     $Task = 'default',
 
     [string]
-    $Server = 'localhost'
+    $Server = 'localhost',
+    
+    [string]
+    $Repo = '\\Server\DSCRepo'
 )
 
 # Not-Availiable on servers without WMF5 and Internet access.
@@ -13,4 +16,7 @@ if (!(Get-Module -Name Pester -ListAvailable)) { Install-Module -Name Pester }
 if (!(Get-Module -Name PSake -ListAvailable)) { Install-Module -Name PSake }
 if (!(Get-Module -Name PSDeploy -ListAvailable)) { Install-Module -Name PSDeploy }
 
-Invoke-psake -buildFile "$PSScriptRoot\psakeBuild.ps1" -taskList $Task -parameters @{"BuildServer" = $Server} -Verbose:$VerbosePreference
+Invoke-psake -buildFile "$PSScriptRoot\psakeBuild.ps1" `
+    -taskList $Task `
+    -parameters @{"Server" = $Server; "Repo" = $Repo} `
+    -Verbose:$VerbosePreference

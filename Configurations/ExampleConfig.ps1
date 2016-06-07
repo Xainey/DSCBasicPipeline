@@ -1,6 +1,5 @@
 ﻿Configuration ExampleConfig
 {
-
     Import-DSCResource -ModuleName xPSDesiredStateConfiguration, MiscUtilities
 
     Node $AllNodes.NodeName

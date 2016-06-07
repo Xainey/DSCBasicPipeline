@@ -41,11 +41,47 @@
     // Associate with test task runner
     "tasks": [
         {
+            "taskName": "KitchenCreate",
+            "suppressTaskName": true,
+            "showOutput": "always",
+            "args": [
+                "Write-Host 'Invoking Kitchen...';  &kitchen create;",
+                "Invoke-Command { Write-Host 'Completed Kitchen Create in task runner.' }"
+            ]
+        },
+        {
+            "taskName": "KitchenConverge",
+            "suppressTaskName": true,
+            "showOutput": "always",
+            "args": [
+                "Write-Host 'Invoking Kitchen...'; &kitchen converge;",
+                "Invoke-Command { Write-Host 'Completed Kitchen Converge task in task runner.' }"
+            ]
+        },
+        {
+            "taskName": "KitchenVerify",
+            "suppressTaskName": true,
+            "showOutput": "always",
+            "args": [
+                "Write-Host 'Invoking Kitchen...'; &kitchen verify;",
+                "Invoke-Command { Write-Host 'Completed Kitchen Verify task in task runner.' }"
+            ]
+        },
+        {
+            "taskName": "KitchenDestroy",
+            "suppressTaskName": true,
+            "showOutput": "always",
+            "args": [
+                "Write-Host 'Invoking Kitchen...'; &kitchen destroy;",
+                "Invoke-Command { Write-Host 'Completed Kitchen Destroy task in task runner.' }"
+            ]
+        },                 
+        {
             "taskName": "PSakeAnalyze",
             "suppressTaskName": true,
             "showOutput": "always",
             "args": [
-                "Write-Host 'Invoking PSake...'; Invoke-PSake psakeBuild.ps1 -taskList Analyze;",
+                "Write-Host 'Invoking PSake...'; ./build.ps1 -Task Analyze;",
                 "Invoke-Command { Write-Host 'Completed PSakeAnalyze task in task runner.' }"
             ]
         },
@@ -54,12 +90,21 @@
             "suppressTaskName": true,
             "showOutput": "always",
             "args": [
-                "Write-Host 'Invoking PSake...'; Invoke-PSake psakeBuild.ps1 -taskList Test;",
+                "Write-Host 'Invoking PSake...'; ./build.ps1 -Task Test",
                 "Invoke-Command { Write-Host 'Completed PSakeTest task in task runner.' }"
             ]
-        },                
+        },
         {
-            "taskName": "PesterTest",
+            "taskName": "PSakeDeploy",
+            "suppressTaskName": true,
+            "showOutput": "always",
+            "args": [
+                "Write-Host 'Invoking PSake...'; ./build.ps1 -Task Deploy",
+                "Invoke-Command { Write-Host 'Completed PSakeDeploy task in task runner.' }"
+            ]
+        },            
+        {
+            "taskName": "PesterUnitTests",
             "suppressTaskName": true,
             "isTestCommand": true,
             "showOutput": "always",
@@ -68,7 +113,7 @@
                 "Set-ItemProperty -Path HKLM:\\Software\\Policies\\Microsoft\\Windows\\PowerShell -Name ExecutionPolicy -Value Unrestricted;",
                 "$env:PSExecutionPolicyPreference = 'Unrestricted';",
                 
-                "Write-Host 'Invoking Pester...'; Invoke-Pester ./* -PesterOption @{IncludeVSCodeMarker=$true};",
+                "Write-Host 'Invoking Pester...'; Invoke-Pester ./Tests/Unit* -PesterOption @{IncludeVSCodeMarker=$true};",
                 "Invoke-Command { Write-Host 'Completed Test task in task runner.' }"
             ],
             "problemMatcher": [

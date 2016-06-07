@@ -19,7 +19,7 @@
 
         # Dev Server
         @{
-            NodeName = "DEVSERVER" # Target Server
+            NodeName = "DEV_DEPLOY_SERVER" # Target Server
          }
 
        <#

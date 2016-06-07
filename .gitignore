@@ -1,0 +1,5 @@
+DSCResource.Tests
+.kitchen/
+.kitchen.local.yml
+Modules/
+ExampleConfig/

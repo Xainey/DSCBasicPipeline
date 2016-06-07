@@ -1,19 +1,32 @@
 properties {
-    $script = "$PSScriptRoot\ExampleConfig.ps1"
-    $server = $BuildServer
+    $script = "$PSScriptRoot\Configurations\ExampleConfig.ps1"
+    $server = $Server
+    $repo = $Repo
 }
-
-#SMB Share for DSC Resources and Packages
-$repo = "\\REPOSERVER\DSCRepo"
-# Clone https://github.com/Xainey/MiscUtilities.git to $repo\Resources
 
 task default -depends Analyze, Test
 
 task Analyze {
-        
-    # Copy to build server modules, analyze will fail if these modules cant be imported.
-    $PSmodules = Join-Path $env:ProgramFiles "WindowsPowerShell\Modules"
-    Copy-Item -Path "$repo\Resources\*" -Destination $PSmodules -Recurse -Force
+
+    # Custom Resource Dependency
+    if ( (-not (Test-Path -Path 'Modules/MiscUtilities')) )
+    {
+        & git @('clone','https://github.com/Xainey/MiscUtilities.git', 'Modules/MiscUtilities')
+    }
+    else
+    {
+        & git @('-C','Modules/MiscUtilities','pull')
+    }
+    
+    # xPSDSC Resource Dependency
+    if ( (-not (Test-Path -Path 'Modules/xPSDesiredStateConfiguration')) )
+    {
+        & git @('clone','https://github.com/PowerShell/xPSDesiredStateConfiguration.git', 'Modules/xPSDesiredStateConfiguration')
+    }
+    else 
+    {
+        & git @('-C','Modules/xPSDesiredStateConfiguration','pull')
+    }
     
     $saResults = Invoke-ScriptAnalyzer -Path $script -Severity @('Error', 'Warning') -Recurse -Verbose:$false
     if ($saResults) {
@@ -22,27 +35,25 @@ task Analyze {
     }
 }
 
-task Test {
-    $testResults = Invoke-Pester -Path $PSScriptRoot -PassThru
-    if ($testResults.FailedCount -gt 0) {
-        $testResults | Format-List
-        Write-Error -Message 'One or more Pester tests failed. Build cannot continue!'
-    }
+task Test -depends Analyze {
+    # Run test-kitchen to build VM for integration tests
+    
+    exec { kitchen test --destroy always }
 }
 
 task Deploy -depends Analyze, Test {
    
     # Copy DSC Custom Resources to $server
     $PSmodules = "\\$server\c$\Program Files\WindowsPowerShell\Modules"
-    Copy-Item -Path "$repo\Resources\*" -Destination $PSmodules -Recurse -Force
+    Copy-Item -Path "Modules\*" -Destination $PSmodules -Recurse -Force
 
     # Load Config
-    $ConfigFile = ".\ExampleConfig.ps1"
+    $ConfigFile = "Configurations\ExampleConfig.ps1"
     . $ConfigFile -Verbose -ErrorAction Stop
     
     # Create .MOF
-    Invoke-Expression -Command "ExampleConfig -ConfigurationData .\ExampleConfigData.psd1"
+    Invoke-Expression -Command "ExampleConfig -ConfigurationData .\Configurations\ExampleConfigData.psd1"
 
-    # Start Configuration
+    # Start Configuration on Target Server
     Start-DscConfiguration -Path .\ExampleConfig -ComputerName $server -Verbose -Wait -Force 
 }
