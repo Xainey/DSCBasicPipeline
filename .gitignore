@@ -1,5 +1,5 @@
-DSCResource.Tests
+DSCResources.Tests
 .kitchen/
 .kitchen.local.yml
 Modules/
-ExampleConfig/
+./ExampleConfig/

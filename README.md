@@ -44,6 +44,11 @@ A ```psake``` script has been created to manage the various operations related t
 .\build.ps1 -Task Deploy -Server $server
 ```
 
+* Create the Test-Kitchen Build Environment
+```powershell
+.\build.ps1 -Task BuildEnvironment
+```
+
 # VSCode Tasks
 Tasks added to `.vscode\tasks.json` to run *Test-Kitchen* and Psake Tasks on local machine.
 

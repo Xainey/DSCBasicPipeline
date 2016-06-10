@@ -15,6 +15,7 @@ param(
 if (!(Get-Module -Name Pester -ListAvailable)) { Install-Module -Name Pester }
 if (!(Get-Module -Name PSake -ListAvailable)) { Install-Module -Name PSake }
 if (!(Get-Module -Name PSDeploy -ListAvailable)) { Install-Module -Name PSDeploy }
+if (!(Get-Module -Name PSScriptAnalyzer -ListAvailable)) { Install-Module -Name PSScriptAnalyzer }
 
 Invoke-psake -buildFile "$PSScriptRoot\psakeBuild.ps1" `
     -taskList $Task `
