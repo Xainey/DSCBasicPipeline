@@ -4,8 +4,8 @@ An example of using the Release Pipeline Model with PowerShell-based tools to ma
 **WIP**: The goal is to run tasks using Jenkins as a CI Server.
 
 * DSC Resource Dependencies are loaded via *git* in `psakeBuild.ps1`
-* Target Servers should be defined in `ExampleConfigData.psd1`
-* DSC Resources are copied to Target Deploy Server using
+* Target Servers should be defined in `ExampleConfigData.psd1` or .MOF will not be created
+* DSC Resources are copied to Target Deploy Server using admin share:
 ```
 $PSmodules = "\\$server\c$\Program Files\WindowsPowerShell\Modules"
 Copy-Item -Path "Modules\*" -Destination $PSmodules -Recurse -Force
@@ -18,6 +18,10 @@ Copy-Item -Path "Modules\*" -Destination $PSmodules -Recurse -Force
 * Pester
 * PSake
 * PSScriptAnalyzer
+
+## Jenkinsfile
+A `Jenkinsfile` has been added to the project root for pipeline support with the [Pipeline Plugin](https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin).
+Set the target `QA_SERVER` to match the QA server set in `ExampleConfigData.psd1`
 
 ## Usage
 A ```psake``` script has been created to manage the various operations related to testing and deployment of ```ExampleConfig.ps1```
