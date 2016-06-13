@@ -4,7 +4,13 @@ properties {
     $repo = $Repo
 }
 
-task default -depends Analyze, Test
+Include ".\build_utils.ps1"
+
+# Manual Tasks run from build.ps1
+task default -depends JenkinsAnalyze, JenkinsTest
+task Analyze -depends JenkinsAnalyze
+task Test    -depends JenkinsAnalyze, JenkinsTest
+task Deploy  -depends JenkinsAnalyze, JenkinsTest, JenkinsDeploy
 
 task BuildEnvironment {
     exec { 
@@ -15,7 +21,7 @@ task BuildEnvironment {
 	}
     
     # Fails since path isnt reloaded after choco install
-    # $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")`
+    # $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     exec { vagrant plugin install vagrant-winrm }
     
     exec { gem install test-kitchen kitchen-vagrant kitchen-dsc kitchen-pester winrm winrm-fs }
@@ -24,21 +30,7 @@ task BuildEnvironment {
     $vendor = 'mwrock/Windows2012R2'
     $provider = 'virtualbox'
 
-    $matches = vagrant box list | Select-String -Pattern '(\S+)\s+\((\w+), ([\d.]+)\)' -AllMatches
-
-    $boxes = @()
-    foreach ($box in $matches)
-    { 
-        $boxes += [pscustomobject] @{
-            "Vendor"   = $box.Matches.groups[1].value
-            "Provider" = $box.Matches.groups[2].value
-            "Version"  = $box.Matches.groups[3].value
-        }
-    }
-
-    $virtualBox = $boxes | Where {$_.Vendor -eq $vendor -and $_.Provider -eq $provider}
-
-    if($null -eq $virtualBox)
+    if(Test-VagrantBoxInstalled -vendor $vendor -provider $provider)
     {
         exec { vagrant box add $vendor --provider $provider }
     }
@@ -46,29 +38,18 @@ task BuildEnvironment {
     {
         Write-Host "Box already installed"
     }
-    
 }
 
-task Analyze {
+task JenkinsAnalyze {
     # Custom Resource Dependency
-    if ( (-not (Test-Path -Path 'Modules/MiscUtilities')) )
-    {
-        & git @('clone','https://github.com/Xainey/MiscUtilities.git', 'Modules/MiscUtilities')
-    }
-    else
-    {
-        & git @('-C','Modules/MiscUtilities','pull')
-    }
+    Get-GitRepository `
+        -RepoPath 'Modules/MiscUtilities' `
+        -RepoURL 'https://github.com/Xainey/MiscUtilities.git'
     
     # xPSDSC Resource Dependency
-    if ( (-not (Test-Path -Path 'Modules/xPSDesiredStateConfiguration')) )
-    {
-        & git @('clone','https://github.com/PowerShell/xPSDesiredStateConfiguration.git', 'Modules/xPSDesiredStateConfiguration')
-    }
-    else 
-    {
-        & git @('-C','Modules/xPSDesiredStateConfiguration','pull')
-    }
+    Get-GitRepository `
+        -RepoPath 'Modules/xPSDesiredStateConfiguration' `
+        -RepoURL 'https://github.com/PowerShell/xPSDesiredStateConfiguration.git'
     
     # Add current location to temp PSModulePath
     $env:psmodulepath += ";$PSScriptRoot\Modules"
@@ -80,12 +61,15 @@ task Analyze {
     }
 }
 
-task Test -depends Analyze {
+task JenkinsTest {
     # Run test-kitchen to build VM for integration tests
     exec { kitchen test --destroy always }
 }
 
-task Deploy -depends Analyze, Test {
+task JenkinsDeploy {
+    # Add current location modules to temp PSModulePath
+    $env:psmodulepath += ";$PSScriptRoot\Modules"
+
     # Copy DSC Custom Resources to $server
     $PSmodules = "\\$server\c$\Program Files\WindowsPowerShell\Modules"
     Copy-Item -Path "Modules\*" -Destination $PSmodules -Recurse -Force
