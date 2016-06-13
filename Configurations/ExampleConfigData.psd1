@@ -17,20 +17,14 @@
             ExampleFolder = "c:\dsc\Example"
          },
 
-        # Dev Server
-        @{
-            NodeName = "DEV_DEPLOY_SERVER" # Target Server
-         }
-
-       <#
         # QA Server
         @{
-            NodeName = "QASERVER"
-        },
+            NodeName = "QA_SERVER" # Target Server
+         }
         
-        #PROD Server
+        <#PROD Server
         @{
-            NodeName = "PRODSERVER"
+            NodeName = "PROD_SERVER"
         }
         #>
     );
