@@ -21,3 +21,5 @@ Invoke-psake -buildFile "$PSScriptRoot\psakeBuild.ps1" `
     -taskList $Task `
     -parameters @{"Server" = $Server; "Repo" = $Repo} `
     -Verbose:$VerbosePreference
+
+exit ( [int]( -not $psake.build_success ) )
